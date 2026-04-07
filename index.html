@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProTrade Simulator</title>
+    <!-- Modern Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- TradingView Script -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- AUTHENTICATION VIEWS (Login / Register)    -->
+    <!-- ========================================== -->
+    <div id="auth-view" class="auth-container">
+        <div class="glass-card auth-card">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20"></path>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <h2>ProTrade</h2>
+            </div>
+            <p class="subtitle">Secure Crypto Trading Simulator</p>
+
+            <!-- Login Form -->
+            <form id="login-form">
+                <h3>Login</h3>
+                <input type="email" id="login-email" placeholder="Email Address" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" id="login-btn">Login to Dashboard</button>
+                <p class="switch-auth">Don't have an account? <span id="go-to-register">Register here</span></p>
+            </form>
+
+            <!-- Register Form (Hidden by default) -->
+            <form id="register-form" style="display: none;">
+                <h3>Create Account</h3>
+                <input type="text" id="reg-username" placeholder="Username" required>
+                <input type="email" id="reg-email" placeholder="Email Address" required>
+                <input type="password" id="reg-password" placeholder="Password" required>
+                <button type="submit" class="btn btn-primary" id="register-btn">Create Account</button>
+                <p class="switch-auth">Already have an account? <span id="go-to-login">Log in here</span></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- DASHBOARD VIEW (Split Screen)              -->
+    <!-- ========================================== -->
+    <div id="dashboard-view" class="dashboard-container" style="display: none;">
+        
+        <!-- Top Navbar -->
+        <nav class="top-nav">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <h2>ProTrade Simulator</h2>
+            </div>
+            
+            <div class="nav-right">
+                <button class="btn btn-primary" id="btn-leaderboard" style="padding: 0.5rem 1rem; border-radius:12px; margin-right: 15px; font-weight:600;">🏆 Leaderboard</button>
+                <div class="user-greeting">Welcome, <span id="username-display">User</span></div>
+                <button class="btn-logout" id="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="split-layout">
+            <!-- LEFT SCREEN: TradingView Chart -->
+            <div class="chart-section">
+                <!-- Market Switch and Pair Selector -->
+                <div class="market-controls">
+                    <div class="market-switch">
+                        <button class="market-tab active" data-market="crypto">Crypto</button>
+                        <button class="market-tab" data-market="forex">Forex</button>
+                        <button class="market-tab" data-market="stocks">Stocks</button>
+                    </div>
+                    
+                    <div class="coin-selector" id="crypto-selector"></div>
+                    
+                    <div class="coin-selector" id="forex-selector" style="display: none;"></div>
+                    
+                    <div class="coin-selector" id="stocks-selector" style="display: none;"></div>
+                </div>
+                
+                <div class="chart-wrapper">
+                    <div id="tv_chart_container"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT SCREEN: Trading Panel -->
+            <div class="trading-panel">
+                <div class="glass-card panel-card">
+                    
+                    <!-- Portfolio Stats -->
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="label">Available Balance</span>
+                            <h2 class="value" id="balance">₹0.00</h2>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label" id="holdings-label">BTC Holdings</span>
+                            <h2 class="value" id="holdings">0.000000 <span id="holdings-symbol">BTC</span></h2>
+                            <span class="portfolio-val" id="portfolio-value">≈ ₹0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Market Price -->
+                    <div class="market-price-box">
+                        <div class="coin-info">
+                            <div class="coin-icon" id="coin-icon">₿</div>
+                            <div>
+                                <h3 id="coin-name">Bitcoin</h3>
+                                <span class="ticker" id="coin-ticker">BTC / INR</span>
+                            </div>
+                        </div>
+                        
+                        <div class="price-container">
+                            <div class="price-wrapper">
+                                <h1 class="price" id="price">...</h1>
+                                <span class="price-trend" id="price-trend">−</span>
+                            </div>
+                            <span class="last-updated" id="last-updated">Fetching live price…</span>
+                        </div>
+                    </div>
+
+                    <!-- Trading Action -->
+                    <div class="trade-action-box">
+                        <label class="label">Trade Amount (₹)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">₹</span>
+                            <input type="number" id="amount-input" class="amount-input" placeholder="0.00" min="1" step="any">
+                        </div>
+                        <span class="btc-preview" id="coin-preview">≈ 0.00000000 BTC</span>
+                        
+                        <div class="quick-amounts">
+                            <button class="quick-btn" data-amount="100">₹100</button>
+                            <button class="quick-btn" data-amount="500">₹500</button>
+                            <button class="quick-btn" data-amount="1000">₹1K</button>
+                            <button class="quick-btn" data-amount="5000">₹5K</button>
+                            <button class="quick-btn" data-amount="10000">₹10K</button>
+                        </div>
+                        
+                        <div class="trading-actions">
+                            <button class="btn btn-buy glow-green" id="buy-btn">
+                                <span id="buy-text">Buy BTC</span>
+                            </button>
+                            <button class="btn btn-sell glow-red" id="sell-btn">
+                                <span id="sell-text">Sell BTC</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="auth-container" style="display: none; z-index: 1000; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); justify-content: center; align-items: center;">
+        <div class="glass-card auth-card" style="width: 500px; max-width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0;">🏆 Global Leaderboard</h2>
+                <button id="close-leaderboard" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+            
+            <div class="leaderboard-content">
+                <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th style="padding: 10px;">Rank</th>
+                            <th style="padding: 10px;">Trader</th>
+                            <th style="padding: 10px; text-align: right;">Portfolio Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
